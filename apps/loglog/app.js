@@ -65,40 +65,6 @@ function showMenu() {
   E.showMenu(menu);
 }
 
-function viewLog() {
-  E.showMessage("Loading...");
-  var f = require("Storage").read(fileName);
-  if (!f) {
-    E.showMessage("No log data", "Empty");
-    setTimeout(showMenu, 1500);
-    return;
-  }
-  
-  var lines = f.split("\n");
-  var records = lines.length - 1; // minus header
-  var lastLine = lines[lines.length-1];
-  var firstLine = lines[1];
-  var length = 0;
-  
-  if (lastLine && firstLine) {
-    var lastTime = parseInt(lastLine.split(",")[0]);
-    var firstTime = parseInt(firstLine.split(",")[0]);
-    if (!isNaN(lastTime) && !isNaN(firstTime)) {
-      length = Math.round((lastTime - firstTime)/1000);
-    }
-  }
-
-  var menu = {
-    "" : { title : "Log Data" },
-    "< Back" : () => { showMenu(); }
-  };
-  menu[records+" Records"] = "";
-  menu[length+" Seconds"] = "";
-  menu[Math.round(f.length/1024)+" KB"] = "";
-  
-  E.showMenu(menu);
-}
-
 function stopRecord() {
   if (!logging) return;
   logging = false;
@@ -167,6 +133,8 @@ function startRecord() {
       }
       else {
         Bangle.removeListener('accel', accelHandler);
+        if (writeInterval) clearInterval(writeInterval);
+        writeBuffer(); // Final write
         layout.state.label = "STOPPED";
         layout.state.bgCol = "#0f0";
         stopped = true;
@@ -291,14 +259,40 @@ function startRecord() {
   // Start Accelerometer
   Bangle.setPollInterval(settings.pollInterval);
   Bangle.on('accel', accelHandler);
+}
+
+function viewLog() {
+  E.showMessage("Loading...");
+  var f = require("Storage").read(fileName);
+  if (!f) {
+    E.showMessage("No log data", "Empty");
+    setTimeout(showMenu, 1500);
+    return;
+  }
   
-  // Cleanup on stop
-  var originalStop = stopRecord;
-  stopRecord = function() {
-    originalStop();
-    if (writeInterval) clearInterval(writeInterval);
-    writeBuffer(); // Final write
+  var lines = f.split("\n");
+  var records = lines.length - 1; // minus header
+  var lastLine = lines[lines.length-1];
+  var firstLine = lines[1];
+  var length = 0;
+  
+  if (lastLine && firstLine) {
+    var lastTime = parseInt(lastLine.split(",")[0]);
+    var firstTime = parseInt(firstLine.split(",")[0]);
+    if (!isNaN(lastTime) && !isNaN(firstTime)) {
+      length = Math.round((lastTime - firstTime)/1000);
+    }
+  }
+
+  var menu = {
+    "" : { title : "Log Data" },
+    "< Back" : () => { showMenu(); }
   };
+  menu[records+" Records"] = "";
+  menu[length+" Seconds"] = "";
+  menu[Math.round(f.length/1024)+" KB"] = "";
+  
+  E.showMenu(menu);
 }
 
 Bangle.loadWidgets();
