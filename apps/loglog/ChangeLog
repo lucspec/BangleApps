@@ -4,3 +4,4 @@
 0.04: Make bootloader app; rely on webui
 0.05: Fixup webui start/stop getting weird returns
 0.06: Start works, fixing stop, logfile wasn't growing
+0.07: Simplify

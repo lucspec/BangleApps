@@ -23,6 +23,7 @@ function openFile() {
 }
 
 function logData(a) {
+  if(!isLogging || !file) return;
   const now = Date.now();
   if(now - lastAccelTime < ACCEL_INTERVAL) return;
   lastAccelTime = now;
@@ -41,64 +42,33 @@ function logData(a) {
 }
 
 function stopLogging() {
+  if(!isLogging) return;
   isLogging = false;
-  logCount = 0;
-  try{ if(file) file.close(); }catch(e){}
-  file=null;
   Bangle.removeAllListeners("accel");
   Bangle.removeAllListeners("HRM");
-  setTimeout(function() {
-    try{ Bangle.setHRMPower(false,"loglog"); }catch(e){}
-  }, 10);
+  try{ if(file) file.close(); }catch(e){}
+  file=null;
 }
 
 function startLogging() {
+  if(isLogging) return;
   isLogging = true;
+  logCount = 0;
   openFile();
   Bangle.on("HRM", h=>{ hr=h.bpm; hrConf=h.confidence; });
-  Bangle.on("accel", a=>logData(a));
-  setTimeout(function() {
-    try{ if(!Bangle.isHRMOn()) Bangle.setHRMPower(true,"loglog"); }catch(e){}
-    try{ Bangle.setAccelPower(true); }catch(e){}
-    try{ Bangle.setGyroPower(true); }catch(e){}
-    try{ Bangle.setCompassPower(true); }catch(e){}
-  }, 10);
+  Bangle.on("accel", logData);
+  if(!Bangle.isHRMOn()) Bangle.setHRMPower(1,"loglog");
 }
 
-// Declare as global explicitly for linter
-global.BangleAppInterface = { 
-  start: function() { 
-    var result;
-    if(isLogging) {
-      result = {status:"already_running"};
-    } else {
-      startLogging(); 
-      result = {status:"started"};
-    }
-    return result;
-  },
-  stop: function() { 
-    var result;
-    if(!isLogging) {
-      result = {status:"already_stopped"};
-    } else {
-      stopLogging(); 
-      result = {status:"stopped"};
-    }
-    return result;
-  },
-  getStatus: function() {
-    return {
-      logging: isLogging,
-      fileIdx: fileIdx,
-      logFiles: STORAGE.list(/loglog.*\.csv/).length,
-      freeStorage: STORAGE.getFree(),
-      fileOpen: file !== null,
-      lastAccelTime: lastAccelTime,
-      logCount: logCount,
-      hr: hr,
-      hrConf: hrConf
-    };
-  }
+// Simple command interface - no complex returns
+global.loglogStart = startLogging;
+global.loglogStop = stopLogging;
+global.loglogStatus = function() {
+  return {
+    logging: isLogging,
+    fileIdx: fileIdx,
+    logCount: logCount,
+    files: STORAGE.list(/loglog.*\.csv/).length
+  };
 };
 })();
