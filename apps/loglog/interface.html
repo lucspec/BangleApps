@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HR+Accel Logger</title>
+  <link rel="stylesheet" href="../../css/spectre.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1>HR+Accel Logger</h1>
+    <p>Download the combined heart rate and accelerometer log data as CSV.</p>
+    
+    <div class="form-group">
+      <button class="btn btn-primary" id="btnDownload">Download hracclog.csv</button>
+      <button class="btn btn-error" id="btnClear">Clear Log Data</button>
+    </div>
+    
+    <div id="status" class="toast" style="display:none;"></div>
+    
+    <div class="form-group">
+      <label class="form-label">Log Preview (last 20 lines):</label>
+      <pre id="preview" style="background:#f5f5f5;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:11px;"></pre>
+    </div>
+    
+    <div class="form-group">
+      <h3>CSV Format</h3>
+      <p>The CSV file contains the following columns:</p>
+      <ul>
+        <li><strong>Time (ms)</strong> - Milliseconds since recording started</li>
+        <li><strong>BPM</strong> - Heart rate in beats per minute</li>
+        <li><strong>Confidence</strong> - Heart rate confidence (0-100)</li>
+        <li><strong>X</strong> - Accelerometer X axis</li>
+        <li><strong>Y</strong> - Accelerometer Y axis</li>
+        <li><strong>Z</strong> - Accelerometer Z axis</li>
+        <li><strong>Magnitude</strong> - Total acceleration magnitude</li>
+      </ul>
+      <p><em>Note: If "Log raw data" is enabled, accelerometer values are scaled by 8192</em></p>
+    </div>
+  </div>
+
+  <script src="../../lib/interface.js"></script>
+  <script>
+    function showStatus(msg, isError) {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.className = isError ? 'toast toast-error' : 'toast toast-success';
+      status.style.display = 'block';
+      setTimeout(() => status.style.display = 'none', 3000);
+    }
+
+    function updatePreview() {
+      Util.readStorageFile('hracclog.csv', function(data) {
+        if (!data) {
+          document.getElementById('preview').textContent = 'No log data available';
+          return;
+        }
+        
+        const lines = data.split('\n');
+        const lastLines = lines.slice(-21).join('\n'); // Header + 20 data lines
+        document.getElementById('preview').textContent = lastLines;
+      });
+    }
+
+    document.getElementById('btnDownload').addEventListener('click', function() {
+      Util.readStorageFile('hracclog.csv', function(data) {
+        if (!data) {
+          showStatus('No log data to download', true);
+          return;
+        }
+        
+        const blob = new Blob([data], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'hracclog_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        showStatus('Download started!', false);
+      });
+    });
+
+    document.getElementById('btnClear').addEventListener('click', function() {
+      if (!confirm('Are you sure you want to clear all log data? This cannot be undone.')) {
+        return;
+      }
+      
+      Util.writeStorage('hracclog.csv', '', function() {
+        showStatus('Log data cleared', false);
+        updatePreview();
+      });
+    });
+
+    // Update preview on load
+    setTimeout(updatePreview, 500);
+  </script>
+</body>
+</html>
