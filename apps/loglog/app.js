@@ -10,6 +10,7 @@ let hr=0, hrConf=0, lastAccelTime=0, fileIdx=0;
 let file=null;
 let isLogging=false;
 let logCount=0;
+let fileCount=0;
 
 function getBattery(){ try{return E.getBattery();}catch(e){return -1;} }
 function getOrientation(){ try{return Bangle.getCompass()||0;}catch(e){return 0;} }
@@ -19,6 +20,7 @@ function openFile() {
   if(file) try{ file.close(); }catch(e){}
   const fname = `${FILENAME_PREFIX}${fileIdx}.csv`;
   fileIdx++;
+  fileCount++;
   file = STORAGE.open(fname,"w");
   file.write("timestamp,hr,hr_conf,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,orientation,battery\n");
 }
@@ -47,8 +49,7 @@ function stopLogging() {
   isLogging = false;
   Bangle.removeAllListeners("accel");
   Bangle.removeAllListeners("HRM");
-  try{ if(file) file.close(); }catch(e){}
-  file=null;
+  file = null; // Let it close automatically
 }
 
 function startLogging() {
@@ -69,7 +70,7 @@ global.loglogStatus = function() {
     logging: isLogging,
     fileIdx: fileIdx,
     logCount: logCount,
-    files: STORAGE.list(/loglog.*\.csv/).length
+    files: fileCount
   };
 };
 global.loglogClear = function() {
@@ -78,6 +79,14 @@ global.loglogClear = function() {
   files.forEach(f => STORAGE.erase(f));
   fileIdx = 0;
   logCount = 0;
+  fileCount = 0;
   return {cleared: files.length};
+};
+global.loglogListFiles = function() {
+  const files = STORAGE.list(/loglog.*\.csv/);
+  return files.map(f => {
+    const info = STORAGE.readArrayBuffer(f);
+    return {name: f, size: info ? info.byteLength : 0};
+  });
 };
 })();

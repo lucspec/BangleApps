@@ -37,6 +37,12 @@
         Puck.eval("loglogStatus()", (result) => {
           log("Status: " + JSON.stringify(result, null, 2));
         });
+        // Also check actual file sizes
+        setTimeout(() => {
+          Puck.eval("loglogListFiles()", (files) => {
+            log("Files on disk: " + JSON.stringify(files, null, 2));
+          });
+        }, 100);
       };
       
       document.getElementById("download").onclick = () => {
