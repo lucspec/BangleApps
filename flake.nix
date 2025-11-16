@@ -2,7 +2,7 @@
   description = "BangleApps development with local GitHub Actions workflow testing";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -10,15 +10,17 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        node = pkgs.nodejs_20;
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            nodejs_20
-            git
-            python3
-            act  # Run GitHub Actions locally
-            docker  # Required by act
+          buildInputs = [
+            pkgs.git
+            pkgs.python3
+            pkgs.act  # Run GitHub Actions locally
+            #pkgs.docker  # Required by act, assumed to already be installed
+            
+            node
           ];
 
           shellHook = ''
@@ -42,7 +44,26 @@
               npm install
               echo ""
             fi
-            
+              
+            # Check if there is an OCI socket.
+
+            ### Start with rootless podman, then docker
+            if [ -w /run/user/1000/podman/podman.sock ]; then
+              export DOCKER_HOST=/run/user/1000/podman/podman.sock 
+            else  if [ -w /run/user/1000/docker/docker.sock ]; then
+              export /run/user/1000/docker/docker.sock
+            ### Fall back to rootful podman, then docker
+            else if [ -w /run/podman/podman.sock ]; then
+              export DOCKER_HOST=/run/podman/podman.sock 
+            else  if [ -w /run/docker/docker.sock ]; then
+              export /run/docker/docker.sock
+            ### If all else fails warn the user we couldn't find what we need
+            else
+              echo "You do not have a valid OCI socket as `act` requires"
+              echo "`act` (local github workflows) will not work"
+              echo "Start one and set DOCKER_HOST to proceed"
+            fi
+
             echo "Available commands:"
             echo "  npm test                    - Run tests locally"
             echo "  git submodule update --init - Initialize/update submodules"
@@ -90,13 +111,13 @@
               # Install dependencies if needed
               if [ ! -d "node_modules" ]; then
                 echo "Installing npm dependencies..."
-                ${pkgs.nodejs_20}/bin/npm install
+                ${pkgs.nodejs_18}/bin/npm install
                 echo ""
               fi
               
               # Run tests
               echo "Running tests..."
-              ${pkgs.nodejs_20}/bin/npm test
+              ${pkgs.nodejs_18}/bin/npm test
             '');
           };
 
@@ -108,17 +129,6 @@
               echo "Running GitHub workflow locally with act..."
               echo ""
               
-              # Check if Docker is running
-              if ! ${pkgs.docker}/bin/docker info > /dev/null 2>&1; then
-                echo "Error: Docker is not running. Please start Docker first."
-                echo ""
-                echo "On NixOS, you may need to enable Docker:"
-                echo "  virtualisation.docker.enable = true;"
-                echo ""
-                echo "Or add yourself to the docker group:"
-                echo "  users.users.<your-username>.extraGroups = [ \"docker\" ];"
-                exit 1
-              fi
               
               # Note about submodules
               echo "Note: The workflow will handle submodule initialization"
