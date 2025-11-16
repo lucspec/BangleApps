@@ -1,3 +1,4 @@
 0.01: New App!
 0.02: Strip unnecessary UI
 0.03: Add minimal UI
+0.04: Make bootloader app; rely on webui
