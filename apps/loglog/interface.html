@@ -10,6 +10,7 @@
     <button id="stop" class="btn btn-error">Stop Logging</button>
     <button id="status" class="btn btn-secondary">Get Status</button>
     <button id="download" class="btn btn-success">Download Logs</button>
+    <button id="clear" class="btn btn-warning">Clear All Logs</button>
     <div id="output" style="margin-top:20px; font-family:monospace; white-space:pre-wrap;"></div>
   </div>
   
@@ -39,9 +40,11 @@
       };
       
       document.getElementById("download").onclick = () => {
+        log("Fetching file list...");
         Puck.eval('require("Storage").list(/loglog.*\\.csv/)', (files) => {
-          log("Found " + files.length + " files");
+          log("Found files: " + files.join(", "));
           files.forEach((fname) => {
+            log("Downloading " + fname + "...");
             Puck.eval(`require("Storage").read("${fname}")`, (data) => {
               if (data) {
                 const blob = new Blob([data], {type: "text/csv"});
@@ -51,11 +54,21 @@
                 a.download = fname;
                 a.click();
                 URL.revokeObjectURL(url);
-                log("Downloaded " + fname + " (" + data.length + " bytes)");
+                log("✓ Downloaded " + fname + " (" + data.length + " bytes)");
+              } else {
+                log("✗ " + fname + " was empty or null");
               }
             });
           });
         });
+      };
+      
+      document.getElementById("clear").onclick = () => {
+        if (confirm("Delete all log files?")) {
+          Puck.eval("loglogClear()", (result) => {
+            log("Cleared " + result.cleared + " files");
+          });
+        }
       };
     }
   </script>

@@ -17,8 +17,9 @@ function getGyro(){ try{return Bangle.getGyro()||{x:0,y:0,z:0};}catch(e){return 
 
 function openFile() {
   if(file) try{ file.close(); }catch(e){}
-  const fname = `${FILENAME_PREFIX}${fileIdx++}.csv`;
-  file = STORAGE.open(fname,"a");
+  const fname = `${FILENAME_PREFIX}${fileIdx}.csv`;
+  fileIdx++;
+  file = STORAGE.open(fname,"w");
   file.write("timestamp,hr,hr_conf,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,orientation,battery\n");
 }
 
@@ -70,5 +71,13 @@ global.loglogStatus = function() {
     logCount: logCount,
     files: STORAGE.list(/loglog.*\.csv/).length
   };
+};
+global.loglogClear = function() {
+  stopLogging();
+  const files = STORAGE.list(/loglog.*\.csv/);
+  files.forEach(f => STORAGE.erase(f));
+  fileIdx = 0;
+  logCount = 0;
+  return {cleared: files.length};
 };
 })();
