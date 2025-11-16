@@ -58,14 +58,14 @@
       
       document.getElementById("start").addEventListener("click", () => {
         log("Starting logging...", "info");
-        Puck.eval("BangleAppInterface.start()", (result) => {
+        Puck.eval("(function(){var r=BangleAppInterface.start();return r;})()", (result) => {
           log("Response: " + JSON.stringify(result), "success");
         });
       });
       
       document.getElementById("stop").addEventListener("click", () => {
         log("Stopping logging...", "info");
-        Puck.eval("BangleAppInterface.stop()", (result) => {
+        Puck.eval("(function(){var r=BangleAppInterface.stop();return r;})()", (result) => {
           log("Response: " + JSON.stringify(result), "success");
         });
       });

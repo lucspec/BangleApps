@@ -2,3 +2,4 @@
 0.02: Strip unnecessary UI
 0.03: Add minimal UI
 0.04: Make bootloader app; rely on webui
+0.05: Fixup webui start/stop getting weird returns

@@ -2,7 +2,7 @@
   "id": "loglog",
   "name": "LogLog",
   "shortName": "LogLog",
-  "version": "0.04",
+  "version": "0.05",
   "description": "Records HR, HR confidence, accelerometer, gyro, orientation, and battery to CSV files for ML analysis",
   "readme": "README.md",
   "icon": "app.png",
