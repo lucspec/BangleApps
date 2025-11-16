@@ -9,6 +9,7 @@ const FILENAME_PREFIX = "loglog";
 let hr=0, hrConf=0, lastAccelTime=0, fileIdx=0;
 let file=null;
 let isLogging=false;
+let logCount=0;
 
 function getBattery(){ try{return E.getBattery();}catch(e){return -1;} }
 function getOrientation(){ try{return Bangle.getCompass()||0;}catch(e){return 0;} }
@@ -25,6 +26,7 @@ function logData(a) {
   const now = Date.now();
   if(now - lastAccelTime < ACCEL_INTERVAL) return;
   lastAccelTime = now;
+  logCount++;
   const g = getGyro();
   const orient = getOrientation();
   const batt = getBattery();
@@ -40,11 +42,14 @@ function logData(a) {
 
 function stopLogging() {
   isLogging = false;
+  logCount = 0;
   try{ if(file) file.close(); }catch(e){}
   file=null;
   Bangle.removeAllListeners("accel");
   Bangle.removeAllListeners("HRM");
-  try{ Bangle.setHRMPower(false,"loglog"); }catch(e){}
+  setTimeout(function() {
+    try{ Bangle.setHRMPower(false,"loglog"); }catch(e){}
+  }, 10);
 }
 
 function startLogging() {
@@ -87,7 +92,12 @@ global.BangleAppInterface = {
       logging: isLogging,
       fileIdx: fileIdx,
       logFiles: STORAGE.list(/loglog.*\.csv/).length,
-      freeStorage: STORAGE.getFree()
+      freeStorage: STORAGE.getFree(),
+      fileOpen: file !== null,
+      lastAccelTime: lastAccelTime,
+      logCount: logCount,
+      hr: hr,
+      hrConf: hrConf
     };
   }
 };

@@ -105,6 +105,10 @@
         files.forEach((fname) => {
           log(`Downloading ${fname}...`, "info");
           Puck.eval(`require("Storage").read("${fname}")`, (data) => {
+            if (!data) {
+              log(`File ${fname} is empty or null`, "error");
+              return;
+            }
             const blob = new Blob([data], {type: "text/csv"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
