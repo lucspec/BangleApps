@@ -1,9 +1,53 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <link rel="stylesheet" href="../../css/spectre.min.css">
+</head>
 <body>
-<h3>LogLog Control</h3>
-<button onclick="BangleAppInterface.start()">Start Logging</button>
-<button onclick="BangleAppInterface.stop()">Stop Logging</button>
+  <h3>LogLog Control</h3>
+  <button id="start" class="btn btn-primary">Start Logging</button>
+  <button id="stop" class="btn btn-error">Stop Logging</button>
+  <button id="download" class="btn btn-success">Download Logs</button>
+  <div id="status"></div>
+  <div id="files"></div>
+  
+  <script src="../../core/lib/interface.js"></script>
+  <script>
+    function onInit() {
+      document.getElementById("status").innerHTML = "Connected!";
+      
+      document.getElementById("start").addEventListener("click", () => {
+        Puck.eval("BangleAppInterface.start()", () => {
+          document.getElementById("status").innerHTML = "Logging started";
+        });
+      });
+      
+      document.getElementById("stop").addEventListener("click", () => {
+        Puck.eval("BangleAppInterface.stop()", () => {
+          document.getElementById("status").innerHTML = "Logging stopped";
+        });
+      });
+      
+      document.getElementById("download").addEventListener("click", () => {
+        downloadLogs();
+      });
+    }
+    
+    function downloadLogs() {
+      Puck.eval(`require("Storage").list(/loglog.*\\.csv/)`, (files) => {
+        document.getElementById("files").innerHTML = "Found " + files.length + " files";
+        files.forEach(fname => {
+          Puck.eval(`require("Storage").read("${fname}")`, (data) => {
+            const blob = new Blob([data], {type: "text/csv"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fname;
+            a.click();
+          });
+        });
+      });
+    }
+  </script>
 </body>
 </html>
-
