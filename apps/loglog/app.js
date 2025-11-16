@@ -14,6 +14,7 @@ var fileName = "loglog.csv";
 var maxFileSize = settings.maxFileSize * 1024; // Convert KB to bytes
 var logRawData = settings.logRawData;
 var logging = false;
+var accelHandler, hrmHandler;
 
 function showMenu() {
   var fileSize = 0;
@@ -186,14 +187,14 @@ function startRecord() {
     buffer = "";
   }
 
-  function hrmHandler(hrm) {
+  hrmHandler = function(hrm) {
     lastHR = {bpm: hrm.bpm, confidence: hrm.confidence};
     layout.hr.label = hrm.bpm;
     layout.conf.label = hrm.confidence;
     layout.render();
-  }
+  };
 
-  function accelHandler(accel) {
+  accelHandler = function(accel) {
     var t = getTime()-start;
     
     // Add to buffer
@@ -247,7 +248,7 @@ function startRecord() {
     layout.maxZ.label = maxZ;
     layout.maxMag.label = maxMag;
     layout.render();
-  }
+  };
 
   // Write buffer periodically even if not full
   writeInterval = setInterval(writeBuffer, 5000);

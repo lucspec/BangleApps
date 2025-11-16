@@ -111,13 +111,13 @@
               # Install dependencies if needed
               if [ ! -d "node_modules" ]; then
                 echo "Installing npm dependencies..."
-                ${pkgs.nodejs_18}/bin/npm install
+                ${node}/bin/npm install
                 echo ""
               fi
               
               # Run tests
               echo "Running tests..."
-              ${pkgs.nodejs_18}/bin/npm test
+              ${node}/bin/npm test
             '');
           };
 
