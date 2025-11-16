@@ -11,7 +11,10 @@ let isLogging = false;
 let startTime = 0;
 let logCount = 0;
 
-global.BangleAppInterface = { start: startLogging, stop: stopLogging };
+global.BangleAppInterface = { 
+  start: () => { startLogging(); return "started"; },
+  stop: () => { stopLogging(); return "stopped"; }
+};
 
 function startLogging() {
   if(isLogging) return;
