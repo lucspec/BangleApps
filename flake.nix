@@ -13,17 +13,22 @@
         node = pkgs.nodejs_20;
         getOCI = ''
           # Check if there is an OCI socket.
+          PREFIX=unix:///run/
 
           ### Start with rootless podman, then docker
-          if [ -w /run/user/1000/podman/podman.sock ]; then
-            export DOCKER_HOST=/run/user/1000/podman/podman.sock 
-          elif [ -w /run/user/1000/docker/docker.sock ]; then
-            export /run/user/1000/docker/docker.sock
+          if [ -w $PREFIX/user/1000/podman/podman.sock ]; then
+            export DOCKER_HOST=$PREFIX/user/1000/podman/podman.sock 
+
+          elif [ -w $PREFIX/user/1000/docker/docker.sock ]; then
+            export DOCKER_HOST=$PREFIX/user/1000/docker/docker.sock
+
           ### Fall back to rootful podman, then docker
-          elif [ -w /run/podman/podman.sock ]; then
-            export DOCKER_HOST=/run/podman/podman.sock 
-          elif [ -w /run/docker/docker.sock ]; then
-            export /run/docker/docker.sock
+          elif [ -w $PREFIX/podman/podman.sock ]; then
+            export DOCKER_HOST=$PREFIX/podman/podman.sock 
+
+          elif [ -w $PREFIX/docker/docker.sock ]; then
+            export DOCKER_HOST=$PREFIX/docker/docker.sock
+
           ### If all else fails warn the user we couldn't find what we need
           else
             echo "You do not have a valid OCI socket as `act` requires"

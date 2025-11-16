@@ -34,7 +34,8 @@
     <h3>LogLog Control</h3>
     <button id="start" class="btn btn-primary">Start Logging</button>
     <button id="stop" class="btn btn-error">Stop Logging</button>
-    <button id="status" class="btn btn-secondary">Check Status</button>
+    <button id="status" class="btn btn-secondary">Get Status</button>
+    <button id="download" class="btn btn-success">Download Logs</button>
     <button id="clear" class="btn">Clear Logs</button>
     <div id="logs"></div>
   </div>
@@ -49,65 +50,41 @@
       entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
       logContainer.appendChild(entry);
       logContainer.scrollTop = logContainer.scrollHeight;
-      console.log(message); // Also log to console
+      console.log(message);
     }
     
     function onInit() {
-      log("onInit() called - interface ready", "success");
-      log("Puck object available: " + (typeof Puck !== 'undefined'), "info");
+      log("Connected to Bangle.js", "success");
       
       document.getElementById("start").addEventListener("click", () => {
-        log("Start button clicked", "info");
-        try {
-          log("Calling Puck.eval() to start logging...", "info");
-          Puck.eval("BangleAppInterface.start()", (result) => {
-            log("Puck.eval callback received", "info");
-            log("Result: " + JSON.stringify(result), "success");
-          }, (error) => {
-            log("Puck.eval error callback", "error");
-            log("Error: " + JSON.stringify(error), "error");
-          });
-        } catch(e) {
-          log("Exception in start: " + e.toString(), "error");
-          log("Stack: " + e.stack, "error");
-        }
+        log("Starting logging...", "info");
+        Puck.eval("BangleAppInterface.start()", (result) => {
+          log("Response: " + JSON.stringify(result), "success");
+        });
       });
       
       document.getElementById("stop").addEventListener("click", () => {
-        log("Stop button clicked", "info");
-        try {
-          log("Calling Puck.eval() to stop logging...", "info");
-          Puck.eval("BangleAppInterface.stop()", (result) => {
-            log("Puck.eval callback received", "info");
-            log("Result: " + JSON.stringify(result), "success");
-          }, (error) => {
-            log("Puck.eval error callback", "error");
-            log("Error: " + JSON.stringify(error), "error");
-          });
-        } catch(e) {
-          log("Exception in stop: " + e.toString(), "error");
-          log("Stack: " + e.stack, "error");
-        }
+        log("Stopping logging...", "info");
+        Puck.eval("BangleAppInterface.stop()", (result) => {
+          log("Response: " + JSON.stringify(result), "success");
+        });
       });
       
       document.getElementById("status").addEventListener("click", () => {
-        log("Status button clicked", "info");
-        try {
-          log("Checking if BangleAppInterface exists...", "info");
-          Puck.eval("typeof BangleAppInterface", (result) => {
-            log("BangleAppInterface type: " + result, "info");
-            if (result === "undefined") {
-              log("BangleAppInterface is not defined! Is the app loaded?", "error");
-            } else {
-              // Check what methods are available
-              Puck.eval("Object.keys(BangleAppInterface)", (keys) => {
-                log("Available methods: " + JSON.stringify(keys), "info");
-              });
-            }
-          });
-        } catch(e) {
-          log("Exception in status: " + e.toString(), "error");
-        }
+        log("Getting status...", "info");
+        Puck.eval("BangleAppInterface.getStatus()", (result) => {
+          log("Status: " + JSON.stringify(result), "info");
+          if (result.logging) {
+            log("✓ Logging is ACTIVE", "success");
+          } else {
+            log("✗ Logging is STOPPED", "error");
+          }
+          log(`Files: ${result.logFiles}, Free storage: ${Math.round(result.freeStorage/1024)}KB`, "info");
+        });
+      });
+      
+      document.getElementById("download").addEventListener("click", () => {
+        downloadLogs();
       });
       
       document.getElementById("clear").addEventListener("click", () => {
@@ -116,13 +93,30 @@
       });
     }
     
-    // Log if onInit is not called
-    setTimeout(() => {
-      if (!logContainer.children.length) {
-        log("WARNING: onInit() was never called!", "error");
-        log("This usually means the device is not connected", "error");
-      }
-    }, 1000);
+    function downloadLogs() {
+      log("Listing log files...", "info");
+      Puck.eval('require("Storage").list(/loglog.*\\.csv/)', (files) => {
+        log("Found " + files.length + " log file(s)", "info");
+        if (files.length === 0) {
+          log("No log files to download", "info");
+          return;
+        }
+        
+        files.forEach((fname) => {
+          log(`Downloading ${fname}...`, "info");
+          Puck.eval(`require("Storage").read("${fname}")`, (data) => {
+            const blob = new Blob([data], {type: "text/csv"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fname;
+            a.click();
+            URL.revokeObjectURL(url);
+            log(`Downloaded ${fname} (${data.length} bytes)`, "success");
+          });
+        });
+      });
+    }
   </script>
 </body>
 </html>
