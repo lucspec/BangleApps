@@ -6,16 +6,15 @@
   "description": "Records HR, HR confidence, accelerometer, gyro, orientation, and battery to CSV files for ML analysis",
   "readme": "README.md",
   "icon": "app.png",
-  "type": "app",
+  "type": "bootloader",
   "supports": ["BANGLEJS","BANGLEJS2"],
   "interface": "interface.html",
   "tags": "tool,health,system,ml",
   "storage": [
-    {"name":"loglog.app.js","url":"app.js"},
+    {"name":"loglog.boot.js","url":"app.js"},
     {"name":"loglog.img","url":"app-icon.js","evaluate":true}
   ],
   "data": [
     {"wildcard":"loglog*.csv","storageFile":true}
   ]
 }
-
