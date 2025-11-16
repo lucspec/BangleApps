@@ -15,8 +15,7 @@
     {"name":"loglog.img","url":"app-icon.js","evaluate":true}
   ],
   "data": [
-    {"name":"loglog.csv"},
-    {"wildcard":"loglog*", "storageFile":true}
+    {"wildcard":"loglog*.csv", "storageFile":true}
   ]
 }
 
