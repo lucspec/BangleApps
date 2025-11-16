@@ -13,6 +13,6 @@
     {"name":"loglog.app.js","url":"app.js"},
     {"name":"loglog.info","url":"app-icon.js"}
   ],
-  "data": "loglog.csv",
+  "data": [{"name":"loglog.csv"},{"wildcard":".loglog?","storageFile":true}],
   "interface": "interface.html"
 }
