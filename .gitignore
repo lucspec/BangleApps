@@ -15,3 +15,6 @@ _site
 Desktop.ini
 .sync_*.db*
 *.swp
+
+webtools/heatshrink-js
+webtools/heatshrink.js

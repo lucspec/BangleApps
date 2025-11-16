@@ -1,8 +1,1 @@
-// App icon for launcher
-({
-  name: "LogLog",
-  type: "app",
-  icon: atob("GBiBAAAAAAAAAAAAAAAAAH//gAH//gAH//gAP//4AfgfwAeAB4AHAAcABwAPgA+AH4B/4P/h/+P/5//v///f/8Af4AB4AAcABwAHgAeAD4A/4P/h/+P/4//n/+//////////////8="),
-  sortorder: 0,
-  src: "loglog.app.js"
-});
+require("heatshrink").decompress(atob("mEwwhC/AH4AWzIAByAHDhIICCpINDDAgIIFpAADBBQuKE4QIIFxgAKC7g9HABSbIBQQXWGxgXEKQxOMC5AhBC66WMC5AuBJ5h3ICoI3LeAwKBBAICBD4TmHC48ACgQCCfxC/HAgYXDL44vFA4YRDAoiOIHAgXFYRAXFBwwIIOw4OGIxKmIC5ylHGAoXIXpBIGLxxIIIx6IJFxwwNCxQwLFxYwLCxgwJFxowJCxwwHFx4wHCyAwFFyIwFCyQYDCygA/AH4AFA"))
