@@ -11,6 +11,27 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         node = pkgs.nodejs_20;
+        getOCI = ''
+          # Check if there is an OCI socket.
+
+          ### Start with rootless podman, then docker
+          if [ -w /run/user/1000/podman/podman.sock ]; then
+            export DOCKER_HOST=/run/user/1000/podman/podman.sock 
+          elif [ -w /run/user/1000/docker/docker.sock ]; then
+            export /run/user/1000/docker/docker.sock
+          ### Fall back to rootful podman, then docker
+          elif [ -w /run/podman/podman.sock ]; then
+            export DOCKER_HOST=/run/podman/podman.sock 
+          elif [ -w /run/docker/docker.sock ]; then
+            export /run/docker/docker.sock
+          ### If all else fails warn the user we couldn't find what we need
+          else
+            echo "You do not have a valid OCI socket as `act` requires"
+            echo "`act` (local github workflows) will not work"
+            echo "Start one and set DOCKER_HOST to proceed"
+          fi
+      '';
+
       in
       {
         devShells.default = pkgs.mkShell {
@@ -45,25 +66,7 @@
               echo ""
             fi
               
-            # Check if there is an OCI socket.
-
-            ### Start with rootless podman, then docker
-            if [ -w /run/user/1000/podman/podman.sock ]; then
-              export DOCKER_HOST=/run/user/1000/podman/podman.sock 
-            else  if [ -w /run/user/1000/docker/docker.sock ]; then
-              export /run/user/1000/docker/docker.sock
-            ### Fall back to rootful podman, then docker
-            else if [ -w /run/podman/podman.sock ]; then
-              export DOCKER_HOST=/run/podman/podman.sock 
-            else  if [ -w /run/docker/docker.sock ]; then
-              export /run/docker/docker.sock
-            ### If all else fails warn the user we couldn't find what we need
-            else
-              echo "You do not have a valid OCI socket as `act` requires"
-              echo "`act` (local github workflows) will not work"
-              echo "Start one and set DOCKER_HOST to proceed"
-            fi
-
+            ${getOCI}
             echo "Available commands:"
             echo "  npm test                    - Run tests locally"
             echo "  git submodule update --init - Initialize/update submodules"
@@ -125,6 +128,8 @@
             type = "app";
             program = toString (pkgs.writeShellScript "run-workflow" ''
               set -e
+
+              ${getOCI}
               
               echo "Running GitHub workflow locally with act..."
               echo ""
