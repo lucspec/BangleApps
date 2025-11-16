@@ -2,20 +2,20 @@
   "id": "loglog",
   "name": "LogLog",
   "shortName": "LogLog",
-  "version": "0.01",
-  "description": "Records heart rate and accelerometer data to a single CSV file with circular buffer management",
+  "version": "0.02",
+  "description": "Records heart rate, HR confidence, accelerometer, gyro, orientation, and battery to CSV files for ML analysis",
   "readme": "README.md",
   "icon": "app.png",
   "type": "app",
   "supports": ["BANGLEJS","BANGLEJS2"],
   "interface": "interface.html",
-  "tags": "tool,health,system",
+  "tags": "tool,health,system,ml",
   "storage": [
     {"name":"loglog.app.js","url":"app.js"},
     {"name":"loglog.img","url":"app-icon.js","evaluate":true}
   ],
   "data": [
-    {"wildcard":"loglog*.csv", "storageFile":true}
+    {"wildcard":"loglog*.csv","storageFile":true}
   ]
 }
 
