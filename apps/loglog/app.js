@@ -168,8 +168,8 @@ function startRecord(force) {
         accel.y,
         accel.z,
         accel.mag,
-        "",
-        ""
+        -1,
+        -1
       ].join(",")+"\n");
     }
     
