@@ -2,19 +2,16 @@
   "id": "loglog",
   "name": "LogLog",
   "shortName": "LogLog",
-  "version": "0.09",
-  "description": "Records HR, HR confidence, accelerometer, gyro, orientation, and battery to CSV files for ML analysis",
-  "readme": "README.md",
+  "version": "0.01",
+  "description": "Logs XYZ acceleration and heart rate data inline to a single CSV file that can be downloaded to your PC",
   "icon": "app.png",
-  "type": "bootloader",
+  "tags": "outdoor,health,tool",
   "supports": ["BANGLEJS","BANGLEJS2"],
+  "readme": "README.md",
   "interface": "interface.html",
-  "tags": "tool,health,system,ml",
   "storage": [
-    {"name":"loglog.boot.js","url":"app.js"},
+    {"name":"loglog.app.js","url":"app.js"},
     {"name":"loglog.img","url":"app-icon.js","evaluate":true}
   ],
-  "data": [
-    {"wildcard":"loglog*.csv","storageFile":true}
-  ]
+  "data": [{"wildcard":"loglog.?.csv"}]
 }

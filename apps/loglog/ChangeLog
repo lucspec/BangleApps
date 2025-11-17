@@ -1,9 +1,1 @@
 0.01: New App!
-0.02: Strip unnecessary UI
-0.03: Add minimal UI
-0.04: Make bootloader app; rely on webui
-0.05: Fixup webui start/stop getting weird returns
-0.06: Start works, fixing stop, logfile wasn't growing
-0.07: Simplify
-0.08: broken
-0.09: broken

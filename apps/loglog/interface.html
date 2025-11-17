@@ -1,82 +1,147 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" href="../../css/spectre.min.css">
-</head>
-<body>
-  <div class="container">
-    <h3>LogLog Control</h3>
-    <button id="start" class="btn btn-primary">Start Logging</button>
-    <button id="stop" class="btn btn-error">Stop Logging</button>
-    <button id="status" class="btn btn-secondary">Get Status</button>
-    <button id="download" class="btn btn-success">Download Logs</button>
-    <button id="clear" class="btn btn-warning">Clear All Logs</button>
-    <div id="output" style="margin-top:20px; font-family:monospace; white-space:pre-wrap;"></div>
+  <head>
+    <link rel="stylesheet" href="../../css/spectre.min.css">
+  </head>
+  <body>
+    <div id="data"></div>
+
+    <script src="../../core/lib/interface.js"></script>
+    <script>
+var dataElement = document.getElementById("data");
+
+function getData() {
+  // show loading window
+  Util.showModal("Loading...");
+  // get the data
+  dataElement.innerHTML = "";
+  var promise = Promise.resolve();
+  Puck.eval('require("Storage").list(/loglog\\..\\.csv\\x01/)',files=>{
+    if (files.length==0) {
+      dataElement.innerHTML = "<p>No saved data</p>";
+    } else {
+      files.forEach(fn => {
+        fn = fn.slice(0,-1);
+        dataElement.innerHTML += `
+<div class="card">
+  <div class="card-header">
+    <div class="card-title h5">${fn}</div>
   </div>
-  
-  <script src="../../core/lib/interface.js"></script>
-  <script>
-    function log(msg) {
-      document.getElementById("output").textContent += msg + "\n";
-    }
-    
-    function onInit() {
-      log("Connected!");
-      
-      document.getElementById("start").onclick = () => {
-        Puck.write("loglogStart();\n");
-        log("Started logging");
-      };
-      
-      document.getElementById("stop").onclick = () => {
-        Puck.write("loglogStop();\n");
-        log("Stopped logging");
-      };
-      
-      document.getElementById("status").onclick = () => {
-        Puck.eval("loglogStatus()", (result) => {
-          log("Status: " + JSON.stringify(result, null, 2));
-        });
-        // Also check actual file sizes
-        setTimeout(() => {
-          Puck.eval("loglogListFiles()", (files) => {
-            log("Files on disk: " + JSON.stringify(files, null, 2));
+  <div class="card-body" fn="${fn}"></div>
+  <div class="card-footer">
+    <button class="btn btn-primary" fn="${fn}" act="save">Save</button>
+    <button class="btn" fn="${fn}" act="delete">Delete</button>
+  </div>
+</div>`;
+        promise = promise.then(function() {
+          document.querySelector(`.btn[fn='${fn}'][act='save']`).addEventListener("click", function() {
+            Util.readStorageFile(fn, function(data) {
+              Util.saveCSV(fn.slice(0,-4), data);
+            });
           });
-        }, 100);
-      };
-      
-      document.getElementById("download").onclick = () => {
-        log("Fetching file list...");
-        Puck.eval('require("Storage").list(/loglog.*\\.csv/)', (files) => {
-          log("Found files: " + files.join(", "));
-          files.forEach((fname) => {
-            log("Downloading " + fname + "...");
-            Puck.eval(`require("Storage").read("${fname}")`, (data) => {
-              if (data) {
-                const blob = new Blob([data], {type: "text/csv"});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fname;
-                a.click();
-                URL.revokeObjectURL(url);
-                log("✓ Downloaded " + fname + " (" + data.length + " bytes)");
-              } else {
-                log("✗ " + fname + " was empty or null");
+          document.querySelector(`.btn[fn='${fn}'][act='delete']`).addEventListener("click", function() {
+            Util.showModal("Deleting...");
+            Util.eraseStorageFile(fn, function() {
+              Util.hideModal();
+              getData();
+            });
+          });
+          return new Promise(resolve=>{
+            Puck.eval(`require("Storage").read(${JSON.stringify(fn)})`,csv=>{
+              var el = document.querySelector(`.card-body[fn='${fn}']`);
+              el.innerHTML = '<canvas width="400" height="150"></canvas>';
+              var c = el.firstChild;
+              var ctx = c.getContext("2d");
+              var lines = csv.split("\n");
+              lines.shift(); // remove header
+              var y = 75, sx = 400/lines.length, sy = 25/8;
+              
+              // Plot accelerometer data
+              function plotAccel(n, color) {
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                var started = false;
+                lines.forEach((l,x)=>{
+                  if (!l) return;
+                  var parts = l.split(",");
+                  if (parts[2] === "accel") {
+                    var yc = y + parseFloat(parts[n])*sy;
+                    if (!started) {
+                      ctx.moveTo(x*sx, yc);
+                      started = true;
+                    } else {
+                      ctx.lineTo(x*sx, yc);
+                    }
+                  }
+                });
+                ctx.stroke();
               }
+              
+              // Plot HRM data
+              function plotHRM() {
+                ctx.strokeStyle = 'purple';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                var started = false;
+                lines.forEach((l,x)=>{
+                  if (!l) return;
+                  var parts = l.split(",");
+                  if (parts[2] === "hrm" && parseFloat(parts[8]) > 50) {
+                    var bpm = parseFloat(parts[7]);
+                    var yc = 145 - (bpm / 200 * 145); // scale BPM to canvas
+                    if (!started) {
+                      ctx.moveTo(x*sx, yc);
+                      started = true;
+                    } else {
+                      ctx.lineTo(x*sx, yc);
+                    }
+                  }
+                });
+                ctx.stroke();
+                ctx.lineWidth = 1;
+              }
+              
+              // Draw center line
+              ctx.strokeStyle = '#ccc';
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(400, y);
+              ctx.stroke();
+              
+              // Plot accel X, Y, Z
+              plotAccel(3, 'red');
+              plotAccel(4, 'green');
+              plotAccel(5, 'blue');
+              
+              // Plot HRM
+              plotHRM();
+              
+              // Add legend
+              ctx.font = '10px sans-serif';
+              ctx.fillStyle = 'red';
+              ctx.fillText('X', 5, 10);
+              ctx.fillStyle = 'green';
+              ctx.fillText('Y', 20, 10);
+              ctx.fillStyle = 'blue';
+              ctx.fillText('Z', 35, 10);
+              ctx.fillStyle = 'purple';
+              ctx.fillText('HRM', 50, 10);
+              
+              resolve();
             });
           });
         });
-      };
-      
-      document.getElementById("clear").onclick = () => {
-        if (confirm("Delete all log files?")) {
-          Puck.eval("loglogClear()", (result) => {
-            log("Cleared " + result.cleared + " files");
-          });
-        }
-      };
+      });
     }
-  </script>
-</body>
+    // remove window
+    Util.hideModal();
+  });
+}
+
+// Called when app starts
+function onInit() {
+  getData();
+}
+
+    </script>
+  </body>
 </html>
