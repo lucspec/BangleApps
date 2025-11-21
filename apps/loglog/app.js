@@ -2,25 +2,30 @@ var fileNumber = 0;
 var MAXLOGS = 9;
 var logRawData = false;
 var streamToGB = true;
-var stopped = false;
 
 function getFileName(n) {
   return "loglog."+n+".csv";
 }
 
-// Show main menu
 function showMenu() {
   var menu = {
     "" : { title : "LogLog" },
-    "< Back" : function() { load(); },
+    "< Back" : function() {
+      load();
+    },
     "File No" : {
       value : fileNumber,
       min : 0,
       max : MAXLOGS,
       onchange : v => { fileNumber=v; }
     },
-    "Start" : function() { E.showMenu(); startRecord(); },
-    "View Logs" : function() { viewLogs(); },
+    "Start" : function() {
+      E.showMenu();
+      startRecord();
+    },
+    "View Logs" : function() {
+      viewLogs();
+    },
     "Log raw data" : {
       value : !!logRawData,
       onchange : v => { logRawData=v; }
@@ -28,12 +33,11 @@ function showMenu() {
     "Stream to GB" : {
       value : !!streamToGB,
       onchange : v => { streamToGB=v; }
-    }
+    },
   };
   E.showMenu(menu);
 }
 
-// View single log
 function viewLog(n) {
   E.showMessage("Loading...");
   var f = require("Storage").open(getFileName(n), "r");
@@ -57,20 +61,23 @@ function viewLog(n) {
       } else viewLog(n);
     });
   };
+
   E.showMenu(menu);
 }
 
-// View all logs
 function viewLogs() {
   var menu = {
     "" : { title : "Logs" },
     "< Back" : () => { showMenu(); }
   };
+
   var hadLogs = false;
   for (var i=0;i<=MAXLOGS;i++) {
     var f = require("Storage").open(getFileName(i), "r");
     if (f.readLine()!==undefined) {
-      (function(i){menu["Log "+i] = () => viewLog(i);})(i);
+      (function(i) {
+        menu["Log "+i] = () => viewLog(i);
+      })(i);
       hadLogs = true;
     }
   }
@@ -79,159 +86,207 @@ function viewLogs() {
   E.showMenu(menu);
 }
 
-// Start recording
 function startRecord(force) {
-  stopped = false;
+  var stopped = false;
   if (!force) {
+    // check for existing file
     var f = require("Storage").open(getFileName(fileNumber), "r");
     if (f.readLine()!==undefined)
       return E.showPrompt("Overwrite Log "+fileNumber+"?").then(ok=>{
         if (ok) startRecord(true); else showMenu();
       });
   }
-
+  // display
   g.clear(1);
   Bangle.drawWidgets();
 
   var Layout = require("Layout");
-  var layout = new Layout({
-    type: "v", c: [
-      { type: "txt", font: "6x8:2", label: "LOGLOG", pad: 4, fillx:1, halign:"center", bgCol:g.theme.bg2 },
-
-      { type:"h", pad:2, c:[
-        { type:"v", fillx:1, c:[
-            { type:"txt", font:"6x8", label:"Samples", halign:"center" },
-            { id:"samples", type:"txt", font:"6x8:2", label:"0", pad:4, bgCol:g.theme.bg }
-        ]},
-        { type:"v", fillx:1, c:[
-            { type:"txt", font:"6x8", label:"Time", halign:"center" },
-            { id:"time", type:"txt", font:"6x8:2", label:"0 s", pad:4, bgCol:g.theme.bg }
-        ]}
+  var layout = new Layout(
+    {type: "v", c: [
+        {type: "h", c: [
+          {type: "v", pad: 20, c: [
+            {type:"txt", font:"6x8", label:"Samp", pad:1},
+            {type:"txt", id:"samples", font:"6x8:2", label:"-", pad:0, bgCol:g.theme.bg},
+          ]},
+          {type: "v", pad: 20, c: [
+            {type:"txt", font:"6x8", label:"Time", pad:1},
+            {type:"txt", id:"time", font:"6x8:2", label:"-", pad:0, bgCol:g.theme.bg},
+          ]},
+    ]},
+    {type: "h", c: [
+      { type: "v", pad: 20, c: [
+        {type:"txt", font:"6x8", label:"Max G", pad:1},
+        {type:"txt", id:"maxMag", font:"6x8:2", label:"-", pad:0, bgCol:g.theme.bg},
       ]},
-
-      { type:"h", pad:2, c:[
-        { type:"v", fillx:1, c:[
-            { type:"txt", font:"6x8", label:"Max G", halign:"center" },
-            { id:"maxMag", type:"txt", font:"6x8:2", label:"-", pad:4, bgCol:g.theme.bg }
-        ]},
-        { type:"v", fillx:1, c:[
-            { type:"txt", font:"6x8", label:"BPM", halign:"center" },
-            { id:"bpm", type:"txt", font:"6x8:2", label:"-", pad:4, bgCol:g.theme.bg }
-        ]}
+      {type: "v", pad: 20, c: [
+        {type:"txt", font:"6x8", label:"Max BPM", pad:1},
+        {type:"txt", id:"bpm", font:"6x8:2", label:"-", pad:0, bgCol:g.theme.bg},
       ]},
-
-      { type:"h", pad:4, filly:1, c:[
-        { id:"state", type:"txt", font:"6x8:2", label:"REC", bgCol:"#d00", fillx:1, halign:"center", pad:6 },
-        { id:"gb", type:"txt", font:"6x8", label:"GB", bgCol:"#003399", pad:6 }
-      ]}
-    ]
-  },{
-    btns:[{
-      id:"btnStop",
-      label:"STOP",
-      cb: ()=>{
-        if (!stopped) {
-          Bangle.removeListener('accel', accelHandler);
-          Bangle.removeListener('HRM', hrmHandler);
-          Bangle.setHRMPower(0);
-          layout.state.label = "STOP";
-          layout.state.bgCol = "#0b0";
-          stopped = true;
-          layout.render();
-        } else showMenu();
+    ]},
+    {type: "h", c: [
+      {type:"txt", id:"state", font:"6x8:2", label:"REC", bgCol:"#f00", pad:3, fillx:1},
+      {type:"txt", id:"gb", font:"6x8", label:"GB", bgCol:"#00f", pad:3},
+    ]},
+  ]},
+  {
+    btns:[
+    {id: "btnStop", label:"STOP", cb:()=>{
+      if (stopped) {
+        showMenu();
       }
-    }]
-  });
+      else {
+        Bangle.removeListener('accel', accelHandler);
+        Bangle.removeListener('HRM', hrmHandler);
+        Bangle.removeListener('step', stepHandler);
+        Bangle.setHRMPower(0);
+        layout.state.label = "STOP";
+        layout.state.bgCol = "#0f0";
+        stopped = true;
+        layout.render();
+      }
+    }}
+  ]});
   layout.render();
 
+  // now start writing
   var f = require("Storage").open(getFileName(fileNumber), "w");
-  f.write("Epoch (ms),Battery,X,Y,Z,AccMag,BPM,Confidence\n");
-
+  f.write("Epoch (ms),Battery,X,Y,Z,AccelMag,BPM,Confidence\n");
   var startTime = Date.now();
   var sampleCount = 0;
   var maxMag = 0;
   var stepCount = 0;
-  var lastGBSend = 0;
-  var gbSendInterval = 10000;
-  var gbAccelSum = 0;
-  var gbAccelCount = 0;
-  var gbLastHRM = 0;
-  var gbLastConf = 0;
+  var gbFlashTimeout;
   var lastUIUpdate = 0;
+  
+  // Rolling window of accel data (last 1 second)
+  var accelWindow = [];
+  var lastAccel = {x: 0, y: 0, z: 0, mag: 0};
 
-  function updateUI() {
+  function flashGBIndicator() {
+    if (gbFlashTimeout) clearTimeout(gbFlashTimeout);
+    layout.gb.bgCol = "#0f0";
+    layout.render();
+    gbFlashTimeout = setTimeout(function() {
+      layout.gb.bgCol = "#00f";
+      layout.render();
+    }, 200);
+  }
+
+  function sendToGadgetbridge(timestamp, hrm, confidence, steps, movAvg) {
+    if (!streamToGB) return;
+    
+    try {
+      Bluetooth.println(JSON.stringify({
+        t: "act",
+        ts: timestamp,
+        hrm: confidence > 30 ? hrm : undefined,  // Lower confidence threshold
+        stp: steps,
+        mov: Math.round(movAvg * 255),
+        rt: 1  // Mark as realtime (don't store in DB)
+      }));
+      
+      flashGBIndicator();
+    } catch(e) {
+      // Bluetooth error - probably not connected
+    }
+  }
+
+  function accelHandler(accel) {
     var now = Date.now();
-    if (now - lastUIUpdate > 200) { // 5Hz
-      layout.samples.label = sampleCount;
-      layout.time.label = Math.round((now-startTime)/1000)+" s";
-      layout.maxMag.label = maxMag;
-      layout.bpm.label = gbLastHRM || "-";
+    var battery = E.getBattery();
+    
+    // Store last accel reading
+    lastAccel = {x: accel.x, y: accel.y, z: accel.z, mag: accel.mag};
+    
+    // Add to rolling window
+    accelWindow.push({t: now, mag: accel.mag});
+    
+    // Remove data older than 1 second
+    accelWindow = accelWindow.filter(d => now - d.t < 1000);
+    
+    // Write to CSV
+    if (logRawData) {
+      f.write([
+        now,
+        battery,
+        Math.round(accel.x*8192),
+        Math.round(accel.y*8192),
+        Math.round(accel.z*8192),
+        Math.round(accel.mag*8192),
+        "",
+        ""
+      ].join(",")+"\n");
+    } else {
+      f.write([
+        now,
+        battery,
+        accel.x,
+        accel.y,
+        accel.z,
+        accel.mag,
+        "",
+        ""
+      ].join(",")+"\n");
+    }
+    
+    if (accel.mag > maxMag) {
+      maxMag = accel.mag.toFixed(2);
+    }
+
+    sampleCount++;
+    
+    // Only update UI every 500ms to prevent overwriting
+    var now = Date.now();
+    if (now - lastUIUpdate > 500) {
+      // Clear and update each field with fixed width
+      layout.samples.label = (""+sampleCount).padStart(5);
+      layout.time.label = (Math.round((now-startTime)/1000)+"s").padStart(5);
+      layout.maxMag.label = (""+maxMag).padStart(4);
+      layout.clear();
       layout.render();
       lastUIUpdate = now;
     }
   }
 
-  function sendToGadgetbridge() {
-    if (!streamToGB) return;
-    var movIntensity = gbAccelCount>0?Math.round((gbAccelSum/gbAccelCount)*255):0;
-    if (movIntensity>255) movIntensity=255;
-
-    try {
-      Bluetooth.println(JSON.stringify({
-        t: "act",
-        ts: Date.now(),
-        hrm: gbLastConf>50?gbLastHRM:undefined,
-        stp: stepCount,
-        mov: movIntensity
-      }));
-      layout.gb.bgCol="#0f0";
-      layout.render();
-      setTimeout(()=>{layout.gb.bgCol="#003399"; layout.render();},200);
-    } catch(e){}
-
-    gbAccelSum=0;
-    gbAccelCount=0;
-  }
-
-  function accelHandler(accel) {
-    var t=Date.now();
-    var battery = E.getBattery();
-    gbAccelSum += accel.mag;
-    gbAccelCount++;
-
-    if (logRawData) {
-      f.write([t,battery,accel.x*8192,accel.y*8192,accel.z*8192,accel.mag*8192,"",""].join(",")+"\n");
-    } else {
-      f.write([t,battery,accel.x,accel.y,accel.z,accel.mag,-1,-1].join(",")+"\n");
-    }
-
-    if (accel.mag>maxMag) maxMag = accel.mag.toFixed(2);
-    sampleCount++;
-
-    if (Date.now()-lastGBSend>=gbSendInterval) {
-      sendToGadgetbridge();
-      lastGBSend = Date.now();
-    }
-
-    updateUI();
-  }
-
   function hrmHandler(hrm) {
-    var t=Date.now();
+    var now = Date.now();
     var battery = E.getBattery();
-    gbLastHRM = hrm.bpm;
-    gbLastConf = hrm.confidence;
-    f.write([t,battery,"","","","",hrm.bpm,hrm.confidence].join(",")+"\n");
-    updateUI();
+    
+    // Write to CSV
+    f.write([
+      now,
+      battery,
+      "","","","",
+      hrm.bpm,
+      hrm.confidence
+    ].join(",")+"\n");
+    
+    // Calculate average movement in the last 1 second window
+    var movAvg = 0;
+    if (accelWindow.length > 0) {
+      movAvg = accelWindow.reduce((sum, d) => sum + d.mag, 0) / accelWindow.length;
+    }
+    
+    // Stream to Gadgetbridge immediately with exact timestamp
+    sendToGadgetbridge(now, hrm.bpm, hrm.confidence, stepCount, movAvg);
+    
+    // Update UI with fixed width
+    layout.bpm.label = (""+hrm.bpm).padStart(3);
+    layout.clear();
+    layout.render();
   }
 
-  Bangle.setPollInterval(80);
+  function stepHandler(steps) {
+    stepCount = steps;
+  }
+
+  Bangle.setPollInterval(80); // 12.5 Hz - the default
   Bangle.setHRMPower(1);
   Bangle.on('accel', accelHandler);
   Bangle.on('HRM', hrmHandler);
+  Bangle.on('step', stepHandler);
 }
 
-// Initialize
 Bangle.loadWidgets();
 Bangle.drawWidgets();
 showMenu();
