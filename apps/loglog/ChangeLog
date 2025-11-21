@@ -1,3 +1,4 @@
 0.01: New App!
 0.02: Neaten UI; log empty strings for missing values, epoch timestamps, remove source
 0.03: Add BT streaming
+0.04: ui overhaul
