@@ -2,7 +2,7 @@
   "id": "hrdynamics",
   "name": "HRDynamics",
   "shortName": "hrdynamics",
-  "version": "0.01",
+  "version": "0.02",
   "description": "Uses a tiny ML model to correct heart rate measurements",
   "icon": "app.png",
   "tags": "outdoor,health,tool",
