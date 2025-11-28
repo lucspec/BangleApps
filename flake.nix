@@ -45,7 +45,6 @@
             pkgs.python3
             pkgs.act  # Run GitHub Actions locally
             #pkgs.docker  # Required by act, assumed to already be installed
-            
             node
           ];
 

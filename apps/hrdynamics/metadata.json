@@ -1,0 +1,17 @@
+{
+  "id": "hrdynamics",
+  "name": "HRDynamics",
+  "shortName": "hrdynamics",
+  "version": "0.01",
+  "description": "Uses a tiny ML model to correct heart rate measurements",
+  "icon": "app.png",
+  "tags": "outdoor,health,tool",
+  "supports": ["BANGLEJS2"],
+  "readme": "README.md",
+  "interface": "interface.html",
+  "storage": [
+    {"name":"hrdynamics.app.js","url":"app.js"},
+    {"name":"hrdynamics.img","url":"app-icon.js","evaluate":true}
+  ],
+  "data": [{"wildcard":"hrmodel_.?.csv"}]
+}

@@ -160,7 +160,7 @@ function startRecord(force) {
   
   // Rolling window of accel data (last 1 second)
   var accelWindow = [];
-  var lastAccel = {x: 0, y: 0, z: 0, mag: 0};
+  //var lastAccel = {x: 0, y: 0, z: 0, mag: 0};
 
   function flashGBIndicator() {
     if (gbFlashTimeout) clearTimeout(gbFlashTimeout);
@@ -196,7 +196,7 @@ function startRecord(force) {
     var battery = E.getBattery();
     
     // Store last accel reading
-    lastAccel = {x: accel.x, y: accel.y, z: accel.z, mag: accel.mag};
+    //lastAccel = {x: accel.x, y: accel.y, z: accel.z, mag: accel.mag};
     
     // Add to rolling window
     accelWindow.push({t: now, mag: accel.mag});
