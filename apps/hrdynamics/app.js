@@ -246,7 +246,7 @@ function saveLog() {
   }
   
   // Write to storage with timestamp
-  const filename = `hrmodel_${Math.floor(Date.now())}.csv`;
+  const filename = `hrdynamics_${Math.floor(Date.now())}.csv`;
   require("Storage").write(filename, csv);
   
   console.log(`Saved ${logData.length} samples to ${filename}`);
